@@ -46,10 +46,10 @@ async function getToken(CLIENT_ID, CLIENT_SECRET) {
     }
   }
   // Upload video function
-async function uploadVideo(url, videoName, videoPath) {
+async function uploadVideo(url, videoFile) {
   const headers = { "Content-Type": "video/mp4" };
   const videoData = await new Promise((resolve, reject) => {
-    const filePath = `${videoPath}/${videoName}`;
+    const filePath = videoFile.path;
     fs.readFile(filePath, (err, data) => {
       if (err) {
         reject(err);
@@ -117,11 +117,12 @@ async function waitForTranscriptionJobToComplete(token, jobid) {
   return response;
 }
 
-async function createFinalTranscription(videoName, videoPath) {
+async function createFinalTranscription(videoFile) {
   const token = await getToken(CLIENT_ID, CLIENT_SECRET);
   const data = await generateUploadUrl(token);
-  await uploadVideo(data.signedUrl, videoName, videoPath);
+  await uploadVideo(data.signedUrl, videoFile);
   const jobid = await createTranscription(token, data.url, "en-US");
+  console.log("job id", jobid);
   const transcriptiondata = await waitForTranscriptionJobToComplete(
     token,
     jobid
@@ -132,10 +133,19 @@ async function createFinalTranscription(videoName, videoPath) {
 // createFinalTranscription("h.mp4", "C:\\Users\\Abel\\Downloads\\");
 const express = require("express");
 const bodyParser = require("body-parser");
+const multer = require("multer");
+// Configure multer to accept a single file with the field name 'videoFile'
+const upload = multer({ dest: "uploads/" }).single("videoFile");
 const cors = require("cors");
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
+app.use(cors({
+  origin: "*", // Allow all origins
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  allowedHeaders: "Content-Type, Authorization",
+}));
+
 
 const port = 5000;
 function addBackslashes(inputString) {
@@ -143,20 +153,39 @@ function addBackslashes(inputString) {
 }
 
 app.post("/transcribe-video", async (req, res) => {
-  if (!req.body.filePath || !req.body.fileName) {
-    return res
-      .status(400)
-      .send("Missing required fields: filePath or fileName");
-  }
-  const { filePath, fileName } = req.body;
-  const urlFile = addBackslashes(filePath); // Ensure this function is defined
-
   try {
-    const transcriptionText = await createFinalTranscription(fileName, urlFile);
+    // Wrap multer upload in a promise
+    await new Promise((resolve, reject) => {
+      upload(req, res, function (err) {
+        if (err instanceof multer.MulterError) {
+          reject({ status: 400, message: err.message });
+        } else if (err) {
+          reject({ status: 500, message: err.message });
+        } else if (!req.file) {
+          reject({ status: 400, message: "No video file sent." });
+        } else if (!req.file.mimetype.startsWith("video/")) {
+          reject({ status: 400, message: "Uploaded content is not a video." });
+        } else {
+          // Resolve promise if upload was successful
+          resolve(req.file);
+        }
+      });
+    });
+
+    // At this point, req.file is guaranteed to be a video file
+    const videoFile = req.file;
+
+    // Call createFinalTranscription with videoFile
+    const transcriptionText = await createFinalTranscription(videoFile);
+
+    // Send transcription text in response
     return res.json({ transcriptionText });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).send("Failed to process the video transcription.");
+  } catch ({ status, message }) {
+    // Handle errors
+    console.error(message);
+    return res
+      .status(status || 500)
+      .send(message || "Failed to process the video transcription.");
   }
 });
 
