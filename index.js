@@ -51,7 +51,7 @@ async function uploadVideo(url, videoName, videoPath) {
   console.log("file path before",videoPath)
   
   const videoData = await new Promise((resolve, reject) => {
-    const filePath = `${videoPath}/${videoName}`;
+    const filePath = `C:\\Users\\Abel\\Downloads\\h.mp4`;
     console.log("file path after",filePath)
     fs.readFile(filePath, (err, data) => {
       if (err) {
