@@ -48,8 +48,11 @@ async function getToken(CLIENT_ID, CLIENT_SECRET) {
   // Upload video function
 async function uploadVideo(url, videoName, videoPath) {
   const headers = { "Content-Type": "video/mp4" };
+  console.log("file path before",videoPath)
+  
   const videoData = await new Promise((resolve, reject) => {
     const filePath = `${videoPath}/${videoName}`;
+    console.log("file path after",filePath)
     fs.readFile(filePath, (err, data) => {
       if (err) {
         reject(err);
@@ -149,9 +152,7 @@ app.post("/transcribe-video", async (req, res) => {
       .send("Missing required fields: filePath or fileName");
   }
   const { filePath, fileName } = req.body;
-  console.log("video path from user is", filePath);
   const urlFile = addBackslashes(filePath); // Ensure this function is defined
-  console.log("updated video path is", urlFile);
 
   try {
     const transcriptionText = await createFinalTranscription(fileName, urlFile);
