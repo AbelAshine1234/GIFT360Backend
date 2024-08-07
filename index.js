@@ -123,13 +123,13 @@ async function waitForTranscriptionJobToComplete(token, jobid) {
 async function createFinalTranscription(videoName, videoPath) {
   const token = await getToken(CLIENT_ID, CLIENT_SECRET);
   const data = await generateUploadUrl(token);
-  await uploadVideo(data.signedUrl, videoName, videoPath);
-  const jobid = await createTranscription(token, data.url, "en-US");
-  const transcriptiondata = await waitForTranscriptionJobToComplete(
-    token,
-    jobid
-  );
-  return transcriptiondata;
+  // await uploadVideo(data.signedUrl, videoName, videoPath);
+  // const jobid = await createTranscription(token, data.url, "en-US");
+  // const transcriptiondata = await waitForTranscriptionJobToComplete(
+  //   token,
+  //   jobid
+  // );
+  return "transcriptiondata";
 }
 
 // createFinalTranscription("h.mp4", "C:\\Users\\Abel\\Downloads\\");
