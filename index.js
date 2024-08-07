@@ -48,11 +48,8 @@ async function getToken(CLIENT_ID, CLIENT_SECRET) {
   // Upload video function
 async function uploadVideo(url, videoName, videoPath) {
   const headers = { "Content-Type": "video/mp4" };
-  console.log("file path before",videoPath)
-  
   const videoData = await new Promise((resolve, reject) => {
-    const filePath = `C:\\Users\\Abel\\Downloads\\h.mp4`;
-    console.log("file path after",filePath)
+    const filePath = `${videoPath}/${videoName}`;
     fs.readFile(filePath, (err, data) => {
       if (err) {
         reject(err);
@@ -124,12 +121,12 @@ async function createFinalTranscription(videoName, videoPath) {
   const token = await getToken(CLIENT_ID, CLIENT_SECRET);
   const data = await generateUploadUrl(token);
   await uploadVideo(data.signedUrl, videoName, videoPath);
-  // const jobid = await createTranscription(token, data.url, "en-US");
-  // const transcriptiondata = await waitForTranscriptionJobToComplete(
-  //   token,
-  //   jobid
-  // );
-  return "transcriptiondata";
+  const jobid = await createTranscription(token, data.url, "en-US");
+  const transcriptiondata = await waitForTranscriptionJobToComplete(
+    token,
+    jobid
+  );
+  return transcriptiondata;
 }
 
 // createFinalTranscription("h.mp4", "C:\\Users\\Abel\\Downloads\\");
