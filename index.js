@@ -149,7 +149,9 @@ app.post("/transcribe-video", async (req, res) => {
       .send("Missing required fields: filePath or fileName");
   }
   const { filePath, fileName } = req.body;
+  console.log("video path from user is", filePath);
   const urlFile = addBackslashes(filePath); // Ensure this function is defined
+  console.log("updated video path is", urlFile);
 
   try {
     const transcriptionText = await createFinalTranscription(fileName, urlFile);
